@@ -11,6 +11,7 @@ import roomsRoutes from './routes/rooms.js';
 import bookingsRoutes from './routes/bookings.js';
 import checkinRoutes from './routes/checkin.js';
 import uploadRoutes from './routes/upload.js';
+import customersRoutes from './routes/customers.js';
 import { initRealtime } from './realtime/index.js';
 
 dotenv.config();
@@ -35,7 +36,7 @@ app.use('/api/rooms', roomsRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/checkin', checkinRoutes);
 app.use('/api/upload', uploadRoutes);
-
+app.use('/api/customers', customersRoutes);
 // error handler
 app.use((err, req, res, next) => {
   console.error(err);
