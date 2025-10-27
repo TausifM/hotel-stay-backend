@@ -4,8 +4,8 @@
   "description": "backend-digistay-clone",
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
-  "main": "y",
+  "type": "module",
+  "main": "src/app.js",
   "scripts": {
     "dev": "nodemon --signal SIGTERM --watch src --exec node --experimental-specifier-resolution=node src/app.js",
     "start": "node src/app.js",

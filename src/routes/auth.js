@@ -4,6 +4,7 @@ import { User } from '../db/models/user.js';
 import { signToken } from '../utils/jwt.js';
 import { Hotel } from '../db/models/hotel.js';
 
+
 const router = express.Router();
 
 // simple register (for demo: create a user & optional hotel)

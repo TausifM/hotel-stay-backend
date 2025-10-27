@@ -1,3 +1,6 @@
+import { DataTypes } from "sequelize";
+import {sequelize} from "../index.js";
+
 export const Checkin = sequelize.define('Checkin', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   bookingId: { type: DataTypes.UUID, allowNull: false },

@@ -53,6 +53,8 @@ async function start() {
     console.log('Database connected.');
     // optionally sync models to DB; call separate migration in prod
     // await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: true });
+    console.log('✅ All models synchronized with database');
     server.listen(PORT, () => console.log(`Server listening on ${PORT}`));
   } catch (err) {
     console.error('Failed to start', err);
