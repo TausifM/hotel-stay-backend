@@ -212,11 +212,11 @@ router.get("/", authMiddleware, async (req, res, next) => {
 // === GET /api/customers/:id ===
 // List all customers
 
-router.get("/", authMiddleware, async (req, res, next) => {
+router.get("/all-customers", authMiddleware, async (req, res, next) => {
   try {
     const customers = await Customer.findAll();
     console.log("Customers fetched successfully:", customers);
-    res.json(customers);
+    res.json({message: "Customers fetched successfully", customers });
   } catch (err) {
     next(err);
   }
