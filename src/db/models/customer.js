@@ -12,6 +12,9 @@ export const Customer = sequelize.define('Customer', {
   gender: { type: DataTypes.STRING },
   phone: { type: DataTypes.STRING },
   email: { type: DataTypes.STRING },
+   // 🏠 Room info
+  roomId: { type: DataTypes.UUID, allowNull: true },
+  roomNumber: { type: DataTypes.STRING },
 
   idType: { type: DataTypes.STRING, defaultValue: 'Aadhaar' },
   aadharNumber: { type: DataTypes.STRING, unique: true },
@@ -29,6 +32,7 @@ export const Customer = sequelize.define('Customer', {
   timestamps: true,
   indexes: [
     { fields: ['hotelId'] },
+    { fields: ['phone'] },
     { fields: ['aadharNumber'] },
     { fields: ['createdBy'] }
   ]

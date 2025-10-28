@@ -55,9 +55,6 @@ export function defineAssociations() {
   Hotel.hasMany(Integration, { foreignKey: 'hotelId', onDelete: 'CASCADE' });
   Integration.belongsTo(Hotel, { foreignKey: 'hotelId' });
 
-  Hotel.hasMany(Notification, { foreignKey: 'hotelId', onDelete: 'CASCADE' });
-  Notification.belongsTo(Hotel, { foreignKey: 'hotelId' });
-
   // 👥 Staff created by a User (optional)
   User.hasMany(Staff, { foreignKey: 'createdBy', onDelete: 'SET NULL' });
   Staff.belongsTo(User, { as: 'creator', foreignKey: 'createdBy' });
@@ -116,11 +113,17 @@ export function defineAssociations() {
   ServiceRequest.belongsTo(Staff, { as: 'assignedStaff', foreignKey: 'assignedTo' });
 
   // 🔔 Notifications — can belong to a User or Customer
-  User.hasMany(Notification, { foreignKey: 'userId', onDelete: 'SET NULL' });
+  User.hasMany(Notification, { foreignKey: 'userId', as: 'userNotifications', onDelete: 'SET NULL' });
   Notification.belongsTo(User, { foreignKey: 'userId' });
 
   Customer.hasMany(Notification, { foreignKey: 'customerId', onDelete: 'SET NULL' });
   Notification.belongsTo(Customer, { foreignKey: 'customerId' });
+  
+  Hotel.hasMany(Notification, { foreignKey: 'hotelId', as: 'hotelNotifications', onDelete: 'CASCADE' });
+  Notification.belongsTo(Hotel, { foreignKey: 'hotelId' });
 
+  Staff.hasMany(Notification, { foreignKey: 'staffId', as: 'staffNotifications', onDelete: 'SET NULL' });
+  Notification.belongsTo(Staff, { foreignKey: 'staffId' });
+  
   console.log('✅ All associations defined successfully');
 }

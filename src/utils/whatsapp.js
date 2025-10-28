@@ -16,7 +16,7 @@ export async function sendWhatsAppMessage(phone, hotelId) {
       type: "interactive",
       interactive: {
         type: "button",
-        body: { text: "Welcome to Grand Palace Hotel 🏨\nChoose a service:" },
+        body: { text: `Welcome to ${hotel.name}! How can we assist you today?` },
         action: {
           buttons: [
             {

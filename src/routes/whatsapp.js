@@ -44,7 +44,11 @@ router.post("/webhook", async (req, res) => {
       console.warn("⚠️ No hotel found for WhatsApp number", phoneNumber);
       return res.sendStatus(200);
     }
-
+     // 2️⃣ Find or create customer
+    const [customer] = await Customer.findOrCreate({
+      where: { phone },
+      defaults: { name: "Guest", phone, hotelId: hotel.id, createdBy: hotel.tenantId },
+    });
     // Match the message text to a service type
     const normalized = text.toLowerCase();
     let type = "General";
@@ -52,23 +56,35 @@ router.post("/webhook", async (req, res) => {
     if (normalized.includes("clean")) type = "Room Cleaning";
     else if (normalized.includes("food")) type = "Food Order";
     else if (normalized.includes("laundry")) type = "Laundry";
-    else if (normalized.includes("water")) type = "Water Refill";
+    else if (normalized.includes("other")) type = "Other Request";
 
-    // Create a ServiceRequest
+    // 4️⃣ Create service request
     const request = await ServiceRequest.create({
       hotelId: hotel.id,
-      type,
-      description: text,
-      status: "Pending",
+      customerId: customer.id,
+      roomId: customer.currentRoomId,
+      type: serviceType,
+      status: "pending",
+      message: text,
+    });
+    // Notify staff via Socket.io
+    // broadcastServiceRequest(hotel.id, request);
+    // broadcastNotification(hotel.id, {
+    //   type: "ServiceRequest",
+    //   message: `WhatsApp: ${type} requested via ${phoneNumber}`,
+    //   meta: request,
+    // });
+    // 5️⃣ Create notification for hotel staff
+    const notif = await Notification.create({
+      hotelId: hotel.id,
+      title: `New ${serviceType} Request`,
+      message: `${customer.name} requested: ${text}`,
+      type: "ServiceRequest",
     });
 
-    // Notify staff via Socket.io
+    // 6️⃣ Broadcast to dashboard
     broadcastServiceRequest(hotel.id, request);
-    broadcastNotification(hotel.id, {
-      type: "ServiceRequest",
-      message: `WhatsApp: ${type} requested via ${phoneNumber}`,
-      meta: request,
-    });
+    broadcastNotification(hotel.id, notif);
 
     // ✅ Auto-reply to guest on WhatsApp (optional)
     if (hotel.whatsappAccessToken && hotel.whatsappPhoneNumberId) {
@@ -78,7 +94,7 @@ router.post("/webhook", async (req, res) => {
         {
           messaging_product: "whatsapp",
           to: phoneNumber,
-          text: { body: `✅ Your ${type} request has been received. Our team will assist you shortly.` },
+          text: { body: `✅ Thank you! Your ${serviceType} request has been received. Our staff will assist you shortly.` },
         },
         {
           headers: {

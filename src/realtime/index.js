@@ -21,6 +21,12 @@ export function initRealtime(serverIO) {
       console.log(`🚪 Socket ${socket.id} left room hotel:${hotelId}`);
     });
 
+    // Allow Staff to connect to their hotel room
+    socket.on("joinHotel", ({ hotelId, role }) => {
+      socket.join(`hotel:${hotelId}`);
+      socket.join(`hotel:${hotelId}:${role}`);
+      console.log(`👤 User joined hotel ${hotelId} as ${role}`);
+    });
     socket.on("disconnect", () => {
       console.log("❌ Client disconnected", socket.id);
     });
@@ -32,7 +38,12 @@ export function initRealtime(serverIO) {
  */
 export function broadcastServiceRequest(hotelId, request) {
   if (!io) return;
-  io.to(`hotel:${hotelId}`).emit("serviceRequest:new", request);
+  io.to(`hotel:${hotelId}`).emit("serviceRequest:new", {
+    title: `🛎️ New ${request.type}`,
+    message: `${request.message}`,
+    customerId: request.customerId,
+    createdAt: request.createdAt,
+  });
 }
 
 export function broadcastBookingUpdate(hotelId, booking) {
@@ -42,5 +53,43 @@ export function broadcastBookingUpdate(hotelId, booking) {
 
 export function broadcastNotification(hotelId, notification) {
   if (!io) return;
-  io.to(`hotel:${hotelId}`).emit("notification:new", notification);
+  const msg = {
+    type: notification.type || "General",
+    title: notification.title || "🔔 Notification",
+    message: notification.message || "New event received.",
+    meta: notification.meta || {},
+    timestamp: new Date().toISOString(),
+  };
+
+  // Determine target roles by type
+  const roleTargets = [];
+  switch (notification.type) {
+    case "ServiceRequest":
+      if (notification.meta?.type === "Room Cleaning") roleTargets.push("housekeeping", "manager");
+      else if (notification.meta?.type === "Maintenance") roleTargets.push("staff", "manager");
+      else roleTargets.push("staff", "manager", "reception");
+      break;
+
+    case "BookingUpdate":
+    case "CheckIn":
+    case "CheckOut":
+      roleTargets.push("reception", "manager", 'hotelOwner');
+      break;
+
+    case "Payment":
+      roleTargets.push("manager", "accountant", 'hotelOwner');
+      break;
+
+    default:
+      roleTargets.push("manager", "staff", "reception", 'hotelOwner');
+      break;
+  }
+
+  // Send to base hotel channel (for global dashboard views)
+  io.to(`hotel:${hotelId}`).emit("notification:new", msg);
+
+  // Send to each specific role channel
+  for (const role of roleTargets) {
+    io.to(`hotel:${hotelId}:${role}`).emit("notification:new", msg);
+  }
 }
