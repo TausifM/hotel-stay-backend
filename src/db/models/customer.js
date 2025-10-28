@@ -21,6 +21,8 @@ export const Customer = sequelize.define('Customer', {
 
   verified: { type: DataTypes.BOOLEAN, defaultValue: false },
   checkInId: { type: DataTypes.UUID },
+  lastCheckInDate: { type: DataTypes.DATE },
+  lastCheckOutDate: { type: DataTypes.DATE },
   metadata: { type: DataTypes.JSONB, defaultValue: {} }
 }, {
   tableName: 'customers',

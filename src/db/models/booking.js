@@ -13,6 +13,9 @@ export const Booking = sequelize.define('Booking', {
   checkoutAt: { type: DataTypes.DATE, allowNull: false },
   status: { type: DataTypes.ENUM('reserved','checked_in','checked_out','cancelled'), defaultValue: 'reserved' },
   price: { type: DataTypes.DECIMAL(10,2), defaultValue: 0.00 },
+  paymentStatus: { type: DataTypes.ENUM('pending','paid','failed', 'refunded'), defaultValue: 'pending' },
+  paymentMethod: { type: DataTypes.STRING },
+  createdBy: { type: DataTypes.UUID, allowNull: false },
   metadata: { type: DataTypes.JSONB, defaultValue: {} }
 }, { tableName: 'bookings', timestamps: true });
 

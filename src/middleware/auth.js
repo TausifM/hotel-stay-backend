@@ -17,13 +17,22 @@ export async function authMiddleware(req, res, next) {
     return res.status(401).json({ error: 'Invalid token' });
   }
 }
-
-export function requireRole(role) {
+export function requireRole(roles) {
   return (req, res, next) => {
-    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-    if (req.user.role !== role && req.user.role !== 'admin') {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userRole = req.user.role;
+
+    // Normalize roles: allow single string or array
+    const allowedRoles = Array.isArray(roles) ? roles : [roles];
+
+    // Check if user's role is allowed or if they're an admin
+    if (!allowedRoles.includes(userRole) && userRole !== 'admin') {
       return res.status(403).json({ error: 'Forbidden' });
     }
+
     next();
   };
 }

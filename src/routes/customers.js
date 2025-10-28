@@ -4,7 +4,7 @@ import Tesseract from "tesseract.js";
 import { Customer } from "../db/models/customer.js";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
 import path from "path";
-import fs from "fs";
+import { sendWhatsAppMessage } from "../utils/whatsapp.js";
 
 const router = express.Router();
 
@@ -76,19 +76,54 @@ function multerIfMultipart(middleware) {
 function parseAadhaarText(text) {
   const data = {};
 
-  // Try extracting common Aadhaar fields
-  const nameMatch = text.match(/(?<=Name|NAME|नाम)[ :\-]([A-Z\s]+)/i);
-  const dobMatch = text.match(/DOB[: ]?(\d{2}\/\d{2}\/\d{4})/i);
-  const genderMatch = text.match(/\b(MALE|FEMALE|OTHER)\b/i);
-  const aadharMatch = text.match(/\d{4}\s\d{4}\s\d{4}/);
+  // Normalize text
+  const cleaned = text
+    .replace(/\n+/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/[|_,;]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Name
+  const nameMatch =
+    cleaned.match(/(?:Name|नाम)[:\-]?\s*([A-Za-z\s]+)(?=\s+(?:Year|DOB|YOB|Male|Female|पुरुष|महिला))/i) ||
+    cleaned.match(/\b([A-Z][a-z]+(?:\s[A-Z][a-z]+){1,3})\b/);
+
+  // Year or Date of Birth (very flexible)
+  const dobMatch =
+    cleaned.match(/(?:Year\s*of\s*Birth|YOB|DOB|Date\s*of\s*Birth)[^0-9]*(\d{4}|\d{2}[\/\-]\d{2}[\/\-]\d{4})/i);
+
+  // Gender
+  const genderMatch = cleaned.match(/\b(MALE|FEMALE|पुरुष|महिला)\b/i);
+
+  // Aadhaar number
+  const aadharMatch = cleaned.match(/\d{4}\s?\d{4}\s?\d{4}/);
+
+  // Address
+  const addressMatch = cleaned.match(/Address[:\-]?\s*([\w\s,.-]+\d{6})/i);
 
   if (nameMatch) data.name = nameMatch[1].trim();
-  if (dobMatch) data.dob = new Date(dobMatch[1].split("/").reverse().join("-"));
-  if (genderMatch) data.gender = genderMatch[1];
-  if (aadharMatch) data.aadharNumber = aadharMatch[0].replace(/\s/g, "");
 
-  // Try extracting address (optional)
-  const addressMatch = text.match(/Address[:\- ]([\s\S]+)/i);
+  if (dobMatch) {
+    const dobText = dobMatch[1];
+    if (/^\d{4}$/.test(dobText)) {
+      // Only year detected
+      data.dob = new Date(`${dobText}-01-01`);
+    } else if (dobText.includes("/")) {
+      const [day, month, year] = dobText.split("/");
+      data.dob = new Date(`${year}-${month}-${day}`);
+    } else if (dobText.includes("-")) {
+      const [day, month, year] = dobText.split("-");
+      data.dob = new Date(`${year}-${month}-${day}`);
+    }
+  }
+
+  if (genderMatch) {
+    const g = genderMatch[1].toLowerCase();
+    data.gender = g.includes("male") || g.includes("पुरुष") ? "Male" : "Female";
+  }
+
+  if (aadharMatch) data.aadharNumber = aadharMatch[0].replace(/\s/g, "");
   if (addressMatch) data.address = addressMatch[1].trim();
 
   return data;
@@ -127,6 +162,10 @@ router.post(
       const extractedText = ocrData.text;
 
       const parsed = parseAadhaarText(extractedText);
+      if (!parsed.name) parsed.name = "Unknown";
+      // Prevent duplicate Aadhaar
+      const existing = await Customer.findOne({ where: { aadharNumber: parsed.aadharNumber } });
+      if (existing) return res.status(200).json({ message: "Returning customer", customer: existing });
 
       const customer = await Customer.create({
         hotelId,
@@ -137,7 +176,10 @@ router.post(
         idType: "Aadhaar",
         ...parsed,
       });
-
+ // ✅ Send WhatsApp welcome message (if number exists)
+      if (customer.phone) {
+        await sendWhatsAppMessage(customer.phone, hotelId);
+          }
       res
         .status(201)
         .json({ message: "Customer added successfully", customer });
