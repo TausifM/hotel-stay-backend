@@ -34,6 +34,8 @@ export const Customer = sequelize.define('Customer', {
     { fields: ['hotelId'] },
     { fields: ['phone'] },
     { fields: ['aadharNumber'] },
+    { fields: ['roomId'] },
+    {fields: ['roomNumber']},
     { fields: ['createdBy'] }
   ]
 });
