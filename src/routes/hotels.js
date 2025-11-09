@@ -6,7 +6,7 @@ const router = express.Router();
 
 // list hotels (admin)
 // Get all hotels (admin or superadmin only)
-router.get("/", authMiddleware, requireRole(["admin", "superadmin"]), async (req, res, next) => {
+router.get("/get-hotels", authMiddleware, requireRole(["admin", "superadmin", "hotelOwner", "staff", "reception", "manager"]), async (req, res, next) => {
   try {
     const hotels = await Hotel.findAll();
     res.json(hotels);
@@ -14,7 +14,7 @@ router.get("/", authMiddleware, requireRole(["admin", "superadmin"]), async (req
 });
 
 // Create hotel (superadmin only)
-router.post("/", authMiddleware, requireRole(["superadmin"]), async (req, res, next) => {
+router.post("/add-hotel",authMiddleware, requireRole(["superadmin", "admin", "hotelOwner", "staff", "reception", "manager"]), async (req, res, next) => {
   try {
     const hotel = await Hotel.create(req.body);
     res.status(201).json({ message: "Hotel created", hotel });
@@ -22,7 +22,7 @@ router.post("/", authMiddleware, requireRole(["superadmin"]), async (req, res, n
 });
 
 // Update hotel
-router.put("/:id", authMiddleware, requireRole(["superadmin", "admin"]), async (req, res, next) => {
+router.put("/update-hotel/:id", authMiddleware, requireRole(["superadmin", "admin", "hotelOwner"]), async (req, res, next) => {
   try {
     const hotel = await Hotel.findByPk(req.params.id);
     if (!hotel) return res.status(404).json({ error: "Hotel not found" });
@@ -32,7 +32,7 @@ router.put("/:id", authMiddleware, requireRole(["superadmin", "admin"]), async (
 });
 
 // Delete hotel
-router.delete("/:id", authMiddleware, requireRole(["superadmin"]), async (req, res, next) => {
+router.delete("/delete-hotel/:id", authMiddleware, requireRole(["superadmin", "admin", "hotelOwner"]), async (req, res, next) => {
   try {
     const hotel = await Hotel.findByPk(req.params.id);
     if (!hotel) return res.status(404).json({ error: "Hotel not found" });
