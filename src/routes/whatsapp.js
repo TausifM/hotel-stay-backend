@@ -1,9 +1,9 @@
 // src/routes/whatsapp.js
 import express from "express";
-import { ServiceRequest } from "../models/serviceRequest.js";
-import { Hotel } from "../models/hotel.js";
 import { broadcastNotification, broadcastServiceRequest } from "../realtime/index.js";
 import axios from "axios";
+import { ServiceRequest } from "../db/models/service_request.js";
+import { Hotel } from "../db/models/hotel.js";
 
 const router = express.Router();
 
@@ -63,7 +63,7 @@ router.post("/webhook", async (req, res) => {
       hotelId: hotel.id,
       customerId: customer.id,
       roomId: customer.currentRoomId,
-      type: serviceType,
+      type: type,
       status: "pending",
       message: text,
     });

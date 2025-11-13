@@ -9,7 +9,11 @@ export const Hotel = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-
+    userId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      comment: "Owner user ID",
+    },
     // 🏨 Basic Info
     name: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: true },
@@ -19,6 +23,11 @@ export const Hotel = sequelize.define(
       comment: "1–5 rating",
     },
 
+    imageUrls: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: true,
+      comment: "Array of image URLs",
+    },
     // 🌍 Location
     address: { type: DataTypes.TEXT },
     city: { type: DataTypes.STRING },
@@ -33,6 +42,12 @@ export const Hotel = sequelize.define(
     email: { type: DataTypes.STRING },
     website: { type: DataTypes.STRING },
     whatsappNumber: { type: DataTypes.STRING },
+    // 🕒 Policies & Timings
+    checkInTime: { type: DataTypes.TIME, allowNull: true },
+    checkOutTime: { type: DataTypes.TIME, allowNull: true },
+    cancelationPolicy: { type: DataTypes.TEXT, allowNull: true },
+    smokingPolicy: { type: DataTypes.STRING, allowNull: true },
+    petPolicy: { type: DataTypes.STRING, allowNull: true },
 
     // 💬 WhatsApp Cloud API Integration
     whatsappAccessToken: {
@@ -52,7 +67,9 @@ export const Hotel = sequelize.define(
     },
 
     // 💸 Pricing & Offers
-    baseRoomPrice: { type: DataTypes.DECIMAL(10, 2), allowNull: true },
+    adultCount: { type: DataTypes.INTEGER, defaultValue: 1 },
+    childCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+    pricePerNight: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.00, allowNull: false },
     currency: { type: DataTypes.STRING, defaultValue: "INR" },
     discount: {
       type: DataTypes.JSONB,
@@ -90,11 +107,11 @@ export const Hotel = sequelize.define(
     },
 
     // 🔒 SaaS Tenant Context
-    tenantId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      comment: "Owner or property group",
-    },
+    // tenantId: {
+    //   type: DataTypes.UUID,
+    //   allowNull: false,
+    //   comment: "Owner or property group",
+    // },
 
     // ⚙️ Operational Config
     checkInEnabled: { type: DataTypes.BOOLEAN, defaultValue: true },
@@ -132,7 +149,13 @@ export const Hotel = sequelize.define(
       allowNull: true,
       comment: "dashboard config & widgets",
     },
-
+    totalBookings: { type: DataTypes.INTEGER, defaultValue: 0 },
+    totalRevenue: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.00 },
+    averageRating: { type: DataTypes.FLOAT, defaultValue: 0.0 },
+    reviewCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+    occupancyRate: { type: DataTypes.FLOAT, defaultValue: 0.0 },
+    isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
+    isFeatured: { type: DataTypes.BOOLEAN, defaultValue: false },
     // 🔗 Channel & Booking Integration
     channelManagerEnabled: { type: DataTypes.BOOLEAN, defaultValue: false },
     connectedBookingChannels: {
@@ -147,12 +170,14 @@ export const Hotel = sequelize.define(
     // maybe loyalty program
     loyaltyProgramEnabled: { type: DataTypes.BOOLEAN, defaultValue: false },
     loyaltyProgramDetails: { type: DataTypes.JSONB, allowNull: true },
+    createdAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+    updatedAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
   {
     tableName: "hotels",
     timestamps: true,
     indexes: [
-      { fields: ["tenantId"] },
+      { fields: ["userId"] },
       { fields: ["city"] },
       { fields: ["state"] },
     ],

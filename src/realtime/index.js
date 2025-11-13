@@ -93,3 +93,8 @@ export function broadcastNotification(hotelId, notification) {
     io.to(`hotel:${hotelId}:${role}`).emit("notification:new", msg);
   }
 }
+
+export function ioEmit(hotelId, event, data) {
+  if (!io) return;
+  io.to(`hotel:${hotelId}`).emit(event, data);
+}
